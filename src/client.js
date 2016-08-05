@@ -1,31 +1,28 @@
 /**
  * THIS IS THE ENTRY POINT FOR THE CLIENT, JUST LIKE server.js IS THE ENTRY POINT FOR THE SERVER.
  */
-import 'babel/polyfill';
+import 'babel-polyfill';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import createHistory from 'history/lib/createBrowserHistory';
-import useScroll from 'scroll-behavior/lib/useStandardScroll';
 import createStore from './redux/create';
 import ApiClient from './helpers/ApiClient';
 import io from 'socket.io-client';
 import {Provider} from 'react-redux';
-import {reduxReactRouter, ReduxRouter} from 'redux-router';
+import { Router, browserHistory } from 'react-router';
+import { syncHistoryWithStore } from 'react-router-redux';
+import { ReduxAsyncConnect } from 'redux-async-connect';
+import useScroll from 'scroll-behavior/lib/useStandardScroll';
 
 import getRoutes from './routes';
-import makeRouteHooksSafe from './helpers/makeRouteHooksSafe';
 
 const client = new ApiClient();
-
-// Three different types of scroll behavior available.
-// Documented here: https://github.com/rackt/scroll-behavior
-const scrollableHistory = useScroll(createHistory);
-
+const _browserHistory = useScroll(() => browserHistory)();
 const dest = document.getElementById('content');
-const store = createStore(reduxReactRouter, makeRouteHooksSafe(getRoutes), scrollableHistory, client, window.__data);
+const store = createStore(_browserHistory, client, window.__data);
+const history = syncHistoryWithStore(_browserHistory, store);
 
 function initSocket() {
-  const socket = io('', {path: '/api/ws', transports: ['polling']});
+  const socket = io('', {path: '/ws'});
   socket.on('news', (data) => {
     console.log(data);
     socket.emit('my other event', { my: 'data from client' });
@@ -40,7 +37,11 @@ function initSocket() {
 global.socket = initSocket();
 
 const component = (
-  <ReduxRouter routes={getRoutes(store)} />
+  <Router render={(props) =>
+        <ReduxAsyncConnect {...props} helpers={{client}} filter={item => !item.deferred} />
+      } history={history}>
+    {getRoutes(store)}
+  </Router>
 );
 
 ReactDOM.render(
