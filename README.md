@@ -9,6 +9,29 @@
 
 ---
 
+## Deployment on Heroku
+
+To get this project to work on Heroku, you need to:
+
+1. Add heroku remote `heroku git:remote -a <heroku-app-name>`
+2. `heroku config:set NODE_ENV=production`
+3. `heroku config:set NODE_PATH=./src`
+4. `heroku config:set NPM_CONFIG_PRODUCTION=false`
+  * This is to enable webpack to run the build on deploy.
+
+The first deploy might take a while, but after that your `node_modules` dir should be cached.
+
+## Development
+
+1. `npm run dev`
+2. View on `localhost:3000`
+
+To run production server:
+
+1. Add Remove the `"PORT": 8080` line from the `betterScripts` / `start-prod` section of `package.json`.
+2. `npm run build`
+3. `npm run start`
+
 ## About
 
 This is a starter boilerplate app I've put together using the following technologies:
